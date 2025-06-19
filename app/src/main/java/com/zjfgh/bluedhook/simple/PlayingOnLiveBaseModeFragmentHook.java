@@ -456,7 +456,7 @@ public class PlayingOnLiveBaseModeFragmentHook {
                                 String name = (String) XposedHelpers.callMethod(profile, "getName");
                                 Log.i("BluedHook", "收到消息->直播间消息：" + name + " 退出了直播间");
                                 ModuleTools.showBluedToast(name + " 退出了直播间");
-                                if ((boolean) leaveLiveMsgSend.getTag() && isWatchingLive) {
+                                if (leaveLiveMsgSend != null && (boolean) leaveLiveMsgSend.getTag() && isWatchingLive) {
                                     LiveMsgSendManagerHook.startSendMsg(name + " 退出了直播间");
                                     Log.d("BluedHook", "收到消息->直播间消息：" + name + " 退出了直播间，并发送到公屏。");
                                 }

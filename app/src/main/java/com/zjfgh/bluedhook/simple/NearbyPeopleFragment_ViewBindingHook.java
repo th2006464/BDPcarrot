@@ -78,14 +78,14 @@ public class NearbyPeopleFragment_ViewBindingHook {
                 new XC_MethodHook() {
                     @SuppressLint("UseCompatLoadingForDrawables")
                     @Override
-                    protected void beforeHookedMethod(MethodHookParam param) {
-                        LinearLayout layoutSort = getLayoutSortFromParam(param);
+                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        super.afterHookedMethod(param);
+                        Object nearbyPeopleFragment = param.args[0];
+                        LinearLayout layoutSort = (LinearLayout) XposedHelpers.getObjectField(nearbyPeopleFragment,"layoutSort");
                         if (layoutSort == null) {
-                            Log.e("BluedHook", "Failed to find layoutSort");
+                            Log.e("BluedHook", "initHook 找不到layoutSort1");
                             return;
                         }
-
-                        Log.e("BluedHook", "layoutSort: " + layoutSort);
                         TagLayout tagLayout = new TagLayout(context);
                         tagLayout.setMarginStart(15);
                         tvFindPeople = tagLayout.addTextView(
@@ -98,28 +98,6 @@ public class NearbyPeopleFragment_ViewBindingHook {
                         layoutSort.addView(tagLayout, 0);
                     }
                 });
-    }
-
-    /**
-     * 从MethodHookParam中提取layoutSort视图
-     */
-    private LinearLayout getLayoutSortFromParam(XC_MethodHook.MethodHookParam param) {
-        try {
-            View view = (View) param.args[1];
-            Class<?> Utils = XposedHelpers.findClass(
-                    "butterknife.internal.Utils",
-                    classLoader);
-
-            return (LinearLayout) XposedHelpers.callStaticMethod(
-                    Utils,
-                    "a",
-                    view,
-                    0x7f0a1f6e,
-                    "field 'layoutSort'");
-        } catch (Exception e) {
-            Log.e("BluedHook", "Error getting layoutSort", e);
-            return null;
-        }
     }
 
     // 切换处理状态

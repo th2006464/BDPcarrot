@@ -63,6 +63,7 @@ public class BluedHook implements IXposedHookLoadPackage, IXposedHookInitPackage
                     ChatHook.getInstance(bluedContext, AppContainer.getInstance().getModuleRes());
                     NearbyPeopleFragment_ViewBindingHook.getInstance(AppContainer.getInstance().getBluedContext(), AppContainer.getInstance().getClassLoader());
                     HornViewNewHook.autoHornViewNew();
+                    LikeFollowModel.getInstance(bluedContext, AppContainer.getInstance().getModuleRes());
                     wsServerManager = new WSServerManager(new WSServerManager.WSServerListener() {
                         @Override
                         public void onServerStarted(int port) {
