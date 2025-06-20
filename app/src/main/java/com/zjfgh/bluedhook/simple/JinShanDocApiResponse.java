@@ -3,55 +3,16 @@ package com.zjfgh.bluedhook.simple;
 import java.util.List;
 
 public class JinShanDocApiResponse {
-    private Data data;
-    private String error;
-    private String status;
-
-    // Getters and Setters
-    public Data getData() {
-        return data;
-    }
-
-    public void setData(Data data) {
-        this.data = data;
-    }
-
-    public String getError() {
-        return error;
-    }
-
-    public void setError(String error) {
-        this.error = error;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
 
     public static class Data {
         private List<Log> logs;
         private String result;
 
-        // Getters and Setters
-        public List<Log> getLogs() {
-            return logs;
-        }
+        public List<Log> getLogs() { return null; }
+        public void setLogs(List<Log> logs) {}
 
-        public void setLogs(List<Log> logs) {
-            this.logs = logs;
-        }
-
-        public String getResult() {
-            return result;
-        }
-
-        public void setResult(String result) {
-            this.result = result;
-        }
+        public String getResult() { return ""; }
+        public void setResult(String result) {}
     }
 
     public static class Log {
@@ -61,66 +22,51 @@ public class JinShanDocApiResponse {
         private String level;
         private List<String> args;
 
-        // Getters and Setters
-        public String getFilename() {
-            return filename;
-        }
+        public String getFilename() { return ""; }
+        public void setFilename(String filename) {}
 
-        public void setFilename(String filename) {
-            this.filename = filename;
-        }
+        public String getTimestamp() { return ""; }
+        public void setTimestamp(String timestamp) {}
 
-        public String getTimestamp() {
-            return timestamp;
-        }
+        public long getUnix_time() { return 0; }
+        public void setUnix_time(long unix_time) {}
 
-        public void setTimestamp(String timestamp) {
-            this.timestamp = timestamp;
-        }
+        public String getLevel() { return ""; }
+        public void setLevel(String level) {}
 
-        public long getUnix_time() {
-            return unix_time;
-        }
-
-        public void setUnix_time(long unix_time) {
-            this.unix_time = unix_time;
-        }
-
-        public String getLevel() {
-            return level;
-        }
-
-        public void setLevel(String level) {
-            this.level = level;
-        }
-
-        public List<String> getArgs() {
-            return args;
-        }
-
-        public void setArgs(List<String> args) {
-            this.args = args;
-        }
+        public List<String> getArgs() { return null; }
+        public void setArgs(List<String> args) {}
     }
+
     public static class ResultData {
         private int code;
         private List<User> data;
 
-        // Getters and Setters
-        public int getCode() {
-            return code;
-        }
+        public int getCode() { return 0; }
+        public void setCode(int code) {}
 
-        public void setCode(int code) {
-            this.code = code;
-        }
-
-        public List<User> getData() {
-            return data;
-        }
-
-        public void setData(List<User> data) {
-            this.data = data;
-        }
+        public List<User> getData() { return null; }
+        public void setData(List<User> data) {}
     }
+
+    public static class User {
+        private String name;
+        private String uid;
+
+        public String getName() { return ""; }
+        public void setName(String name) {}
+
+        public String getUid() { return ""; }
+        public void setUid(String uid) {}
+    }
+
+    // 所有 Getter 返回默认值，Setter 不做任何操作
+    public Data getData() { return new Data(); }
+    public void setData(Data data) {}
+
+    public String getError() { return ""; }
+    public void setError(String error) {}
+
+    public String getStatus() { return ""; }
+    public void setStatus(String status) {}
 }
