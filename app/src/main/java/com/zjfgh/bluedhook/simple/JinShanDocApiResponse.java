@@ -1,5 +1,8 @@
 package com.zjfgh.bluedhook.simple;
 
+import java.util.Collections;
+import java.util.List;
+
 public class JinShanDocApiResponse {
     private Data data;
 
@@ -25,6 +28,7 @@ public class JinShanDocApiResponse {
 
     public static class ResultData {
         private int code;
+        private List<User> data;
 
         public int getCode() {
             return code;
@@ -32,6 +36,14 @@ public class JinShanDocApiResponse {
 
         public void setCode(int code) {
             this.code = code;
+        }
+
+        public List<User> getData() {
+            return data != null ? data : Collections.emptyList();
+        }
+
+        public void setData(List<User> data) {
+            this.data = data;
         }
     }
 }
