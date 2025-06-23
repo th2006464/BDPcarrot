@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -12,7 +11,6 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Switch;
 import android.widget.TextView;
-
 import java.util.List;
 
 public class SettingsViewCreator {
@@ -46,6 +44,7 @@ public class SettingsViewCreator {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
         ));
+
         // 创建主线性布局
         LinearLayout mainLayout = new LinearLayout(context);
         mainLayout.setLayoutParams(new ViewGroup.LayoutParams(
@@ -53,48 +52,75 @@ public class SettingsViewCreator {
                 ViewGroup.LayoutParams.WRAP_CONTENT
         ));
         mainLayout.setOrientation(LinearLayout.VERTICAL);
+        mainLayout.setPadding(16, 16, 16, 16);
         scrollView.addView(mainLayout);
 
-        // 获取布局填充器
-        LayoutInflater inflater = LayoutInflater.from(context);
-
-        // 为每个设置项创建视图并添加到主布局
+        // 为每个设置项动态创建视图
         for (SettingItem setting : settingsList) {
-            View settingItemView = inflater.inflate(
-                    AppContainer.getInstance().getModuleRes().getLayout(R.layout.module_item_setting),
-                    mainLayout,
-                    false
-            );
+            // 创建单个设置项的容器
+            LinearLayout settingItemView = new LinearLayout(context);
+            settingItemView.setLayoutParams(new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            ));
+            settingItemView.setOrientation(LinearLayout.VERTICAL);
+            settingItemView.setPadding(16, 16, 16, 16);
 
-            // 初始化视图组件
-            TextView functionName = settingItemView.findViewById(R.id.setting_function_name);
-            TextView description = settingItemView.findViewById(R.id.setting_description);
-            @SuppressLint("UseSwitchCompatOrMaterialCode")
-            Switch switchButton = settingItemView.findViewById(R.id.setting_switch);
-            EditText extraData = settingItemView.findViewById(R.id.setting_extra_data);
-            // 设置初始值
+            // 创建功能名称 TextView
+            TextView functionName = new TextView(context);
+            functionName.setLayoutParams(new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            ));
             functionName.setText(setting.getFunctionName());
+            functionName.setTextSize(16);
+            functionName.setTextColor(0xFF000000); // 黑色文字
+
+            // 创建描述 TextView
+            TextView description = new TextView(context);
+            description.setLayoutParams(new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            ));
             description.setText(setting.getDescription());
+            description.setTextSize(14);
+            description.setTextColor(0xFF666666); // 灰色文字
+
+            // 创建开关
+            @SuppressLint("UseSwitchCompatOrMaterialCode")
+            Switch switchButton = new Switch(context);
+            switchButton.setLayoutParams(new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            ));
             switchButton.setChecked(setting.isSwitchOn());
             if (setting.getFunctionId() == WS_SERVER) {
                 if (BluedHook.wsServerManager != null) {
                     switchButton.setChecked(BluedHook.wsServerManager.isServerRunning());
                 }
             }
+
+            // 创建额外数据输入框
+            EditText extraData = new EditText(context);
+            extraData.setLayoutParams(new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            ));
             if (setting.getExtraDataHint().isEmpty()) {
                 extraData.setVisibility(View.GONE);
             } else {
                 extraData.setText(setting.getExtraData());
                 extraData.setHint(setting.getExtraDataHint());
-                // 根据开关状态设置额外数据的可见性
                 extraData.setVisibility(setting.isSwitchOn() ? View.VISIBLE : View.GONE);
             }
+
             // 设置开关监听器
             switchButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 dbManager.updateSettingSwitchState(setting.getFunctionId(), isChecked);
                 setting.setSwitchOn(isChecked);
-                if (!setting.getExtraDataHint().isEmpty())
+                if (!setting.getExtraDataHint().isEmpty()) {
                     extraData.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+                }
                 switchListener.onSwitchChanged(setting.getFunctionId(), isChecked);
                 if (setting.getFunctionId() == WS_SERVER) {
                     if (BluedHook.wsServerManager != null) {
@@ -106,23 +132,27 @@ public class SettingsViewCreator {
                     }
                 }
             });
+
+            // 设置额外数据输入监听器
             extraData.addTextChangedListener(new TextWatcher() {
                 @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-                }
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    // 更新数据库中的额外数据
                     dbManager.updateSettingExtraData(setting.getFunctionId(), s.toString());
                     setting.setExtraData(s.toString());
                 }
 
                 @Override
-                public void afterTextChanged(Editable s) {
-                }
+                public void afterTextChanged(Editable s) {}
             });
+
+            // 将组件添加到设置项容器
+            settingItemView.addView(functionName);
+            settingItemView.addView(description);
+            settingItemView.addView(switchButton);
+            settingItemView.addView(extraData);
 
             // 将设置项添加到主布局
             mainLayout.addView(settingItemView);
@@ -193,14 +223,12 @@ public class SettingsViewCreator {
         ));
     }
 
-    // 定义Switch状态变化的回调接口
     public interface OnSwitchCheckedChangeListener {
         void onSwitchChanged(int functionId, boolean isChecked);
     }
 
     protected OnSwitchCheckedChangeListener switchListener;
 
-    // 设置监听器的方法
     public void setOnSwitchCheckedChangeListener(OnSwitchCheckedChangeListener listener) {
         this.switchListener = listener;
     }
