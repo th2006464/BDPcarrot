@@ -31,6 +31,9 @@ public class BluedHook implements IXposedHookLoadPackage, IXposedHookZygoteInit 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam param) {
         if (param.packageName.equals("com.soft.blued")) {
+            // Hook 设置界面的视图创建
+            hookSettingsFragment(param.classLoader);
+
             XposedHelpers.findAndHookMethod("com.soft.blued.StubWrapperProxyApplication", param.classLoader, "initProxyApplication", Context.class, new XC_MethodHook() {
                 @Override
                 protected void beforeHookedMethod(XC_MethodHook.MethodHookParam param) throws Throwable {
@@ -38,7 +41,7 @@ public class BluedHook implements IXposedHookLoadPackage, IXposedHookZygoteInit 
                 }
 
                 @Override
-                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                protected void afterHookedMethod(XC_MethodHook.MethodHookParam param) throws Throwable {
                     super.afterHookedMethod(param);
                     Context bluedContext = (Context) param.args[0];
                     AppContainer.getInstance().setBluedContext(bluedContext);
@@ -103,8 +106,6 @@ public class BluedHook implements IXposedHookLoadPackage, IXposedHookZygoteInit 
                             }
                         }
                     });
-                    // Hook 设置界面的视图创建
-                    hookSettingsFragment(param.classLoader);
                 }
             });
         }
@@ -120,7 +121,7 @@ public class BluedHook implements IXposedHookLoadPackage, IXposedHookZygoteInit 
                 new XC_MethodHook() {
                     @SuppressLint("ResourceType")
                     @Override
-                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    protected void afterHookedMethod(XC_MethodHook.MethodHookParam param) throws Throwable {
                         View fragmentView = (View) param.args[0];
                         Context bluedContext = AppContainer.getInstance().getBluedContext();
                         int scrollView1ID = bluedContext.getResources().getIdentifier("scrollView1", "id", bluedContext.getPackageName());
@@ -173,10 +174,10 @@ public class BluedHook implements IXposedHookLoadPackage, IXposedHookZygoteInit 
         ));
         layout.setOrientation(LinearLayout.HORIZONTAL);
         layout.setPadding(
-                ModuleTools.dpToPx(16),
-                ModuleTools.dpToPx(12),
-                ModuleTools.dpToPx(16),
-                ModuleTools.dpToPx(12)
+                dpToPx(context, 16),
+                dpToPx(context, 12),
+                dpToPx(context, 16),
+                dpToPx(context, 12)
         );
 
         // 创建 TextView
@@ -189,16 +190,16 @@ public class BluedHook implements IXposedHookLoadPackage, IXposedHookZygoteInit 
         titleTextView.setTextColor(Color.BLACK);
         titleTextView.setTextSize(16);
         titleTextView.setPadding(
-                ModuleTools.dpToPx(8),
-                ModuleTools.dpToPx(8),
-                ModuleTools.dpToPx(8),
-                ModuleTools.dpToPx(8)
+                dpToPx(context, 8),
+                dpToPx(context, 8),
+                dpToPx(context, 8),
+                dpToPx(context, 8)
         );
 
         // 设置背景
         GradientDrawable background = new GradientDrawable();
         background.setColor(Color.WHITE);
-        background.setCornerRadius(ModuleTools.dpToPx(8));
+        background.setCornerRadius(dpToPx(context, 8));
         layout.setBackground(background);
 
         // 添加 TextView 到 LinearLayout
@@ -206,8 +207,13 @@ public class BluedHook implements IXposedHookLoadPackage, IXposedHookZygoteInit 
         return layout;
     }
 
-    private AlertDialog getAlertDialog(Context context) {
-        SettingsViewCreator creator = new SettingsViewCreator(context);
+    private int dpToPx(Context context, int dp) {
+        float density = context.getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
+    }
+
+    private AlertDialog getAlertDialog(Context context, int dp) {
+        SettingsViewCreator creator = new SettingsView(context, dp);
         View settingsView = creator.createSettingsView();
         creator.setOnSwitchCheckedChangeListener((functionId, isChecked) -> {
             if (functionId == SettingsViewCreator.ANCHOR_MONITOR_LIVE_HOOK) {
