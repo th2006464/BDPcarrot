@@ -1,15 +1,15 @@
 package com.zjfgh.bluedhook.simple;
 
-
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.res.XModuleResources;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.util.Log;
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -26,7 +26,6 @@ import de.robv.android.xposed.IXposedHookZygoteInit;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_InitPackageResources;
-import de.robv.android.xposed.callbacks.XC_LayoutInflated;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class BluedHook implements IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHookZygoteInit {
@@ -51,8 +50,7 @@ public class BluedHook implements IXposedHookLoadPackage, IXposedHookInitPackage
                     try {
                         VoiceTTS.getInstance(bluedContext);
                     } catch (Exception e) {
-                        Log.e("BluedHook", "语音合成模块异常：\n" +
-                                e);
+                        Log.e("BluedHook", "语音合成模块异常：\n" + e);
                     }
                     NetworkManager.getInstance();
                     UserInfoFragmentNewHook.getInstance(bluedContext, AppContainer.getInstance().getModuleRes());
@@ -82,33 +80,23 @@ public class BluedHook implements IXposedHookLoadPackage, IXposedHookInitPackage
 
                         @Override
                         public void onClientConnected(String address) {
-
                         }
 
                         @Override
                         public void onClientDisconnected(String address) {
-
                         }
 
                         @Override
                         public void onMessageReceived(WebSocket conn, String message) {
                             if (message.equals("同步数据")) {
                                 try {
-                                    // 1. 构建基础响应结构
                                     JSONObject response = new JSONObject();
                                     response.put("msgType", 1995);
-
-                                    // 2. 构建msgExtra部分
                                     JSONObject msgExtra = new JSONObject();
                                     msgExtra.put("msgType", "lotteryRecords");
-
-                                    // 3. 获取并转换文件数据为JSON
                                     JSONObject recordsData = new FileToJsonConverter().convertFilesToJson();
                                     msgExtra.put("msgExtra", recordsData);
-
-                                    // 4. 将msgExtra放入主响应
                                     response.put("msgExtra", msgExtra);
-                                    // 5. 广播消息
                                     String jsonResponse = response.toString();
                                     Log.d("WebSocketServer", "Broadcasting records: " + jsonResponse);
                                     wsServerManager.broadcastMessage(jsonResponse);
@@ -133,16 +121,19 @@ public class BluedHook implements IXposedHookLoadPackage, IXposedHookInitPackage
                 @SuppressLint({"ResourceType", "SetTextI18n"})
                 @Override
                 public void handleLayoutInflated(LayoutInflatedParam liParam) {
-                    LayoutInflater inflater = (LayoutInflater) liParam.view.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                     Context bluedContext = AppContainer.getInstance().getBluedContext();
                     int scrollView1ID = bluedContext.getResources().getIdentifier("scrollView1", "id", bluedContext.getPackageName());
                     ScrollView scrollView = liParam.view.findViewById(scrollView1ID);
                     LinearLayout scrollLinearLayout = (LinearLayout) scrollView.getChildAt(0);
-                    LinearLayout mySettingsLayoutAu = (LinearLayout) inflater.inflate(moduleRes.getLayout(R.layout.module_settings_layout), null, false);
+
+                    // 动态创建“复制授权信息”布局
+                    LinearLayout mySettingsLayoutAu = createSettingsItemLayout(liParam.view.getContext());
                     TextView auCopyTitleTv = mySettingsLayoutAu.findViewById(R.id.settings_name);
                     auCopyTitleTv.setText("复制授权信息(请勿随意泄漏)");
                     mySettingsLayoutAu.setOnClickListener(v -> AuthManager.auHook(true, AppContainer.getInstance().getClassLoader(), bluedContext));
-                    LinearLayout moduleSettingsLayout = (LinearLayout) inflater.inflate(moduleRes.getLayout(R.layout.module_settings_layout), null, false);
+
+                    // 动态创建“外挂模块设置”布局
+                    LinearLayout moduleSettingsLayout = createSettingsItemLayout(liParam.view.getContext());
                     TextView moduleSettingsTitleTv = moduleSettingsLayout.findViewById(R.id.settings_name);
                     moduleSettingsTitleTv.setText("外挂模块设置");
                     moduleSettingsLayout.setOnClickListener(view -> {
@@ -151,13 +142,56 @@ public class BluedHook implements IXposedHookLoadPackage, IXposedHookInitPackage
                         dialog.getWindow().setLayout(100, 300);
                         dialog.setOnShowListener(dialogInterface -> {
                             View parentView = dialog.getWindow().getDecorView();
-                            parentView.setBackgroundColor(Color.parseColor("#F7F6F7")); // 自定义背景色
+                            parentView.setBackgroundColor(Color.parseColor("#F7F6F7"));
                         });
                         dialog.show();
-
                     });
+
+                    // 添加到 ScrollView
                     scrollLinearLayout.addView(mySettingsLayoutAu, 0);
                     scrollLinearLayout.addView(moduleSettingsLayout, 1);
+                }
+
+                private LinearLayout createSettingsItemLayout(Context context) {
+                    // 创建 LinearLayout 容器
+                    LinearLayout layout = new LinearLayout(context);
+                    layout.setLayoutParams(new LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT
+                    ));
+                    layout.setOrientation(LinearLayout.HORIZONTAL);
+                    layout.setPadding(
+                            ModuleTools.dpToPx(16),
+                            ModuleTools.dpToPx(12),
+                            ModuleTools.dpToPx(16),
+                            ModuleTools.dpToPx(12)
+                    );
+
+                    // 创建 TextView
+                    TextView titleTextView = new TextView(context);
+                    titleTextView.setId(R.id.settings_name);
+                    titleTextView.setLayoutParams(new LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.WRAP_CONTENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT
+                    ));
+                    titleTextView.setTextColor(Color.BLACK);
+                    titleTextView.setTextSize(16);
+                    titleTextView.setPadding(
+                            ModuleTools.dpToPx(8),
+                            ModuleTools.dpToPx(8),
+                            ModuleTools.dpToPx(8),
+                            ModuleTools.dpToPx(8)
+                    );
+
+                    // 设置背景
+                    GradientDrawable background = new GradientDrawable();
+                    background.setColor(Color.WHITE);
+                    background.setCornerRadius(ModuleTools.dpToPx(8));
+                    layout.setBackground(background);
+
+                    // 添加 TextView 到 LinearLayout
+                    layout.addView(titleTextView);
+                    return layout;
                 }
 
                 private AlertDialog getAlertDialog(LayoutInflatedParam liParam) {
@@ -175,7 +209,6 @@ public class BluedHook implements IXposedHookLoadPackage, IXposedHookInitPackage
             });
         }
     }
-
 
     @Override
     public void initZygote(StartupParam startupParam) {
