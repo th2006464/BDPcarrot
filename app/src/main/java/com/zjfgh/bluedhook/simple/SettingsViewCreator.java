@@ -1,3 +1,4 @@
+```java
 package com.zjfgh.bluedhook.simple;
 
 import android.annotation.SuppressLint;
@@ -30,7 +31,7 @@ public class SettingsViewCreator {
         this.dbManager = SQLiteManagement.getInstance();
     }
 
-    @SuppressLint("UseCompatLoadingForDrawables")
+    @SuppressLint("UseSwitchCompatOrMaterialCode")
     public View createSettingsView() {
         // 初始化示例设置数据
         initializeSettings();
@@ -40,72 +41,76 @@ public class SettingsViewCreator {
 
         // 创建滚动视图作为根布局
         ScrollView scrollView = new ScrollView(context);
-        scrollView.setLayoutParams(new ViewGroup.LayoutParams(
+        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
-        ));
+        );
+        scrollView.setLayoutParams(scrollParams);
 
         // 创建主线性布局
         LinearLayout mainLayout = new LinearLayout(context);
-        mainLayout.setLayoutParams(new ViewGroup.LayoutParams(
+        LinearLayout.LayoutParams mainParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
-        ));
+        );
+        mainLayout.setLayoutParams(mainParams);
         mainLayout.setOrientation(LinearLayout.VERTICAL);
-        mainLayout.setPadding(16, 16, 16, 16);
+        mainLayout.setPadding(dpToPx(16), dpToPx(16), dpToPx(16), dpToPx(16));
         scrollView.addView(mainLayout);
 
         // 为每个设置项动态创建视图
         for (SettingItem setting : settingsList) {
             // 创建单个设置项的容器
             LinearLayout settingItemView = new LinearLayout(context);
-            settingItemView.setLayoutParams(new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT
-            ));
+            );
+            settingItemView.setLayoutParams(itemParams);
             settingItemView.setOrientation(LinearLayout.VERTICAL);
-            settingItemView.setPadding(16, 16, 16, 16);
+            settingItemView.setPadding(dpToPx(16), dpToPx(16), dpToPx(16), dpToPx(16));
 
             // 创建功能名称 TextView
             TextView functionName = new TextView(context);
-            functionName.setLayoutParams(new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams nameParams = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT
-            ));
+            );
+            functionName.setLayoutParams(nameParams);
             functionName.setText(setting.getFunctionName());
             functionName.setTextSize(16);
             functionName.setTextColor(0xFF000000); // 黑色文字
 
             // 创建描述 TextView
             TextView description = new TextView(context);
-            description.setLayoutParams(new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams descParams = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT
-            ));
+            );
+            description.setLayoutParams(descParams);
             description.setText(setting.getDescription());
             description.setTextSize(14);
             description.setTextColor(0xFF666666); // 灰色文字
 
             // 创建开关
-            @SuppressLint("UseSwitchCompatOrMaterialCode")
             Switch switchButton = new Switch(context);
-            switchButton.setLayoutParams(new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams switchParams = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT
-            ));
+            );
+            switchButton.setLayoutParams(switchParams);
             switchButton.setChecked(setting.isSwitchOn());
-            if (setting.getFunctionId() == WS_SERVER) {
-                if (BluedHook.wsServerManager != null) {
-                    switchButton.setChecked(BluedHook.wsServerManager.isServerRunning());
-                }
+            if (setting.getFunctionId() == WS_SERVER && BluedHook.wsServerManager != null) {
+                switchButton.setChecked(BluedHook.wsServerManager.isServerRunning());
             }
 
             // 创建额外数据输入框
             EditText extraData = new EditText(context);
-            extraData.setLayoutParams(new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams editParams = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT
-            ));
+            );
+            extraData.setLayoutParams(editParams);
             if (setting.getExtraDataHint().isEmpty()) {
                 extraData.setVisibility(View.GONE);
             } else {
@@ -121,14 +126,14 @@ public class SettingsViewCreator {
                 if (!setting.getExtraDataHint().isEmpty()) {
                     extraData.setVisibility(isChecked ? View.VISIBLE : View.GONE);
                 }
-                switchListener.onSwitchChanged(setting.getFunctionId(), isChecked);
-                if (setting.getFunctionId() == WS_SERVER) {
-                    if (BluedHook.wsServerManager != null) {
-                        if (isChecked) {
-                            BluedHook.wsServerManager.startServer(Integer.parseInt(setting.getExtraData()));
-                        } else {
-                            BluedHook.wsServerManager.stopServer();
-                        }
+                if (switchListener != null) {
+                    switchListener.onSwitchChanged(setting.getFunctionId(), isChecked);
+                }
+                if (setting.getFunctionId() == WS_SERVER && BluedHook.wsServerManager != null) {
+                    if (isChecked) {
+                        BluedHook.wsServerManager.startServer(Integer.parseInt(setting.getExtraData()));
+                    } else {
+                        BluedHook.wsServerManager.stopServer();
                     }
                 }
             });
@@ -169,7 +174,6 @@ public class SettingsViewCreator {
                 "",
                 ""
         ));
-
         dbManager.addOrUpdateSetting(new SettingItem(ANCHOR_MONITOR_LIVE_HOOK,
                 "主播开播提醒监听",
                 true,
@@ -208,16 +212,14 @@ public class SettingsViewCreator {
         dbManager.addOrUpdateSetting(new SettingItem(SHIELD_LIKE,
                 "屏蔽点赞",
                 false,
-                "屏蔽直播间自己的点赞，以免误触导致主播看到你。\n" +
-                        "注：仅屏蔽发送过程，不会屏蔽本地点赞特效或震动",
+                "屏蔽直播间自己的点赞，以免误触导致主播看到你。\n注：仅屏蔽发送过程，不会屏蔽本地点赞特效或震动",
                 "",
                 ""
         ));
         dbManager.addOrUpdateSetting(new SettingItem(AUTO_LIKE,
                 "直播间自动点赞",
                 false,
-                "进入直播间手动触发一次点赞后，会持续发送点赞消息。\n" +
-                        "注：使用此功能需先关闭屏蔽点赞开关，如需停止自动点赞，请退出直播间或关闭小窗。",
+                "进入直播间手动触发一次点赞后，会持续发送点赞消息。\n注：使用此功能需先关闭屏蔽点赞开关，如需停止自动点赞，请退出直播间或关闭小窗。",
                 "",
                 ""
         ));
@@ -231,5 +233,11 @@ public class SettingsViewCreator {
 
     public void setOnSwitchCheckedChangeListener(OnSwitchCheckedChangeListener listener) {
         this.switchListener = listener;
+    }
+
+    // dp 转 px 的辅助方法
+    private int dpToPx(int dp) {
+        float density = context.getResources().getDisplayMetrics().density;
+        return (int) (dp * density + 0.5f);
     }
 }
