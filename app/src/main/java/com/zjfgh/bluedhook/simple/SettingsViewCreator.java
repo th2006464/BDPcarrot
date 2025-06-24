@@ -1,4 +1,3 @@
-```java
 package com.zjfgh.bluedhook.simple;
 
 import android.annotation.SuppressLint;
