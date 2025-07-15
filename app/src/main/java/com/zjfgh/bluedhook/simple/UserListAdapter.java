@@ -30,7 +30,7 @@ public class UserListAdapter extends ListAdapter<User, UserListAdapter.UserViewH
     private String currentCheckingUid = null;
 
     public interface OnUserDeleteListener {
-        void onUserDelete(User user) throws JSONException;
+        void onUserDelete(User user);
     }
 
     private final OnUserDeleteListener deleteListener;
@@ -157,11 +157,7 @@ public class UserListAdapter extends ListAdapter<User, UserListAdapter.UserViewH
                 DeleteConfirmationDialog.show(context, user.getName(), new DeleteConfirmationDialog.DeleteConfirmationListener() {
                     @Override
                     public void onConfirmDelete() {
-                        try {
-                            deleteListener.onUserDelete(user);
-                        } catch (JSONException e) {
-                            Log.e("UserListAdapter", "delAnchor error", e);
-                        }
+                        deleteListener.onUserDelete(user);
                     }
 
                     @Override
