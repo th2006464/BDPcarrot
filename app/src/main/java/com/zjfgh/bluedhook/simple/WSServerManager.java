@@ -2,6 +2,11 @@ package com.zjfgh.bluedhook.simple;
 
 import android.util.Log;
 
+import org.java_websocket.WebSocket;
+import org.java_websocket.handshake.ClientHandshake;
+import org.java_websocket.server.WebSocketServer;
+
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,7 +49,69 @@ public class WSServerManager {
             }
             return;
         }
-        // 空实现，不启动服务器
+
+        try {
+            mWebSocketServer = new WebSocketServer(new InetSocketAddress(mPort)) {
+                @Override
+                public void onOpen(WebSocket conn, ClientHandshake handshake) {
+                    String clientAddress = conn.getRemoteSocketAddress().getAddress().getHostAddress();
+                    Log.d(TAG, "New connection from: " + clientAddress);
+                    mConnections.add(conn);
+
+                    if (mListener != null) {
+                        mListener.onClientConnected(clientAddress);
+                    }
+                }
+
+                @Override
+                public void onClose(WebSocket conn, int code, String reason, boolean remote) {
+                    String clientAddress = conn.getRemoteSocketAddress().getAddress().getHostAddress();
+                    Log.d(TAG, "Connection closed from: " + clientAddress + ", reason: " + reason);
+                    mConnections.remove(conn);
+
+                    if (mListener != null) {
+                        mListener.onClientDisconnected(clientAddress);
+                    }
+                }
+
+                @Override
+                public void onMessage(WebSocket conn, String message) {
+                    String clientAddress = conn.getRemoteSocketAddress().getAddress().getHostAddress();
+                    Log.d(TAG, "Message from " + clientAddress + ": " + message);
+
+                    if (mListener != null) {
+                        mListener.onMessageReceived(conn, message);
+                    }
+                }
+
+                @Override
+                public void onError(WebSocket conn, Exception ex) {
+                    String error = ex != null ? ex.getMessage() : "Unknown error";
+                    Log.e(TAG, "WebSocket error: " + error);
+
+                    if (mListener != null) {
+                        mListener.onServerError(error);
+                    }
+                }
+
+                @Override
+                public void onStart() {
+                    Log.d(TAG, "WebSocket server started on port " + mPort);
+                    mIsRunning = true;
+
+                    if (mListener != null) {
+                        mListener.onServerStarted(mPort);
+                    }
+                }
+            };
+
+            mWebSocketServer.start();
+        } catch (Exception e) {
+            Log.e(TAG, "Unexpected error starting server: " + e.getMessage());
+            if (mListener != null) {
+                mListener.onServerError(e.getMessage());
+            }
+        }
     }
 
     /**
@@ -58,48 +125,89 @@ public class WSServerManager {
             }
             return;
         }
-        // 空实现，不执行任何操作
+
+        try {
+            // 关闭所有连接
+            for (WebSocket conn : mConnections) {
+                try {
+                    conn.close();
+                } catch (Exception e) {
+                    Log.e(TAG, "Error closing connection: " + e.getMessage());
+                }
+            }
+            mConnections.clear();
+
+            // 停止服务器
+            mWebSocketServer.stop();
+            mWebSocketServer = null;
+            mIsRunning = false;
+
+            Log.d(TAG, "WebSocket server stopped");
+            if (mListener != null) {
+                mListener.onServerStopped();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error stopping server: " + e.getMessage());
+            if (mListener != null) {
+                mListener.onServerError(e.getMessage());
+            }
+        }
     }
 
     /**
      * 向所有连接的客户端广播消息
      */
     public void broadcastMessage(String message) {
-        // 空实现，不广播消息
+        if (!mIsRunning || mWebSocketServer == null) {
+            Log.w(TAG, "Cannot broadcast - server is not running");
+            return;
+        }
+
+        try {
+            mWebSocketServer.broadcast(message);
+        } catch (Exception e) {
+            Log.e(TAG, "Error broadcasting message: " + e.getMessage());
+        }
     }
 
     /**
      * 向特定客户端发送消息
      */
     public void sendMessage(WebSocket conn, String message) {
-        // 空实现，不发送消息
+        if (conn != null && mIsRunning) {
+            try {
+                conn.send(message);
+            } catch (Exception e) {
+                Log.e(TAG, "Error sending message: " + e.getMessage());
+            }
+        }
     }
 
     /**
      * 获取当前连接的客户端数量
      */
     public int getConnectedClientsCount() {
-        return 0; // 返回0，表示没有连接的客户端
+        return mConnections.size();
     }
 
     /**
      * 检查服务器是否正在运行
      */
     public boolean isServerRunning() {
-        return false; // 返回false，表示服务器未运行
+        return mIsRunning;
     }
 
     /**
      * 获取服务器端口
      */
     public int getPort() {
-        return 0; // 返回0，表示没有端口
+        return mPort;
     }
 
     /**
      * 获取所有连接的客户端
      */
     public List<WebSocket> getConnections() {
-        return new ArrayList<>(); // 返回空列表
+        return new ArrayList<>(mConnections);
     }
 }
