@@ -2,6 +2,9 @@ package com.zjfgh.bluedhook.simple;
 
 import android.util.Log;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class WSServerManager {
     private static final String TAG = "WSServerManager";
 
